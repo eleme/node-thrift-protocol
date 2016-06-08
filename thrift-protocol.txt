@@ -1,0 +1,57 @@
+Message := <Message-Begin> <Struct>
+Message-Begin := <Version> <Message-Type> <Method-Name> <Message-Id>
+Version := 0x800100
+Message-Type := int8
+Message-Id := int32be
+Method-Name := <Stirng>
+
+Message-Type := <T_CALL> | <T_REPLY> | <T_EXCEPTION> | <T_ONEWAY>
+T_CALL := 0x01
+T_REPLY := 0x02
+T_EXCEPTION := 0x03
+T_ONEWAY := 0x04
+
+Type := <T_VOID> | <T_BOOL> | <T_I8> | <T_I16> | <T_I32> | <T_I64> | <T_DOUBLE> | <T_STRING> | <T_MAP> | <T_LIST> | <T_STRUCT>
+T_VOID := 0x01
+T_BOOL := 0x02
+T_I8 := 0x03
+T_I16 := 0x06
+T_I32 := 0x08
+T_I64 := 0x0A
+T_DOUBLE := 0x04
+T_STRING := 0x0B
+T_STRUCT := 0x0C
+T_MAP := 0x0D
+T_SET := 0x0E
+T_LIST := 0x0F
+
+Value := <Void> | <Bool> | <I8> | <I16> | <I32> | <I64> | <Double> | <String> | <Map> | <List> | <Struct>
+Void := empty
+Bool := int8
+I8 := int8
+I16 := int16be
+I32 := int32be
+I64 := int64be
+Double := double64be
+
+String := <String-Length> <String-Binary>
+String-Length := int32be
+String-Binary := binary
+
+Map := <Map-Key-Type> <Map-Value-Type> <Map-Count> <Map-Item>*
+Map-Key-Type := <Type>
+Map-Value-Type := <Type>
+Map-Count := int32be
+Map-Item := <Map-Key> <Map-Value>
+Map-Key := <Value>
+Map-Value := <Value>
+
+List := <List-Value-Type> <List-Count> <List-Value>*
+List-Value-Type := <Type>
+List-Count := int32be
+List-Value := <Value>
+
+Struct := <Field>* <Field-Stop>
+Field := <Field-Type> <Field-Id> <Value>
+Field-Id := int16be
+Field-Stop := 0x00
