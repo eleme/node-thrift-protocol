@@ -136,15 +136,13 @@ class TStruct extends Buffer {
 class TMap extends Buffer {
   constructor({ keyType, valueType, data }) {
     super(Buffer.concat([
-      Byte(TYPES[keyType]),
-      Byte(TYPES[valueType]),
-      TInt32(data.length),
-      ...[].concat(...data.map((key, value) => {
-        (key, value) => [
-          TValue({ type: keyType, value: key }),
-          TValue({ type: valueType, value: value })
-        ]
-      }))
+      new TInt8(TYPES[keyType]),
+      new TInt8(TYPES[valueType]),
+      new TInt32(data.length),
+      ...[].concat(...data.map(({ key, value }) => [
+        new TValue({ type: keyType, value: key }),
+        new TValue({ type: valueType, value: value })
+      ]))
     ]))
   }
 }
@@ -152,9 +150,9 @@ class TMap extends Buffer {
 class TList extends Buffer {
   constructor({ valueType, data }) {
     super(Buffer.concat([
-      Byte(TYPES[valueType]),
-      TInt32(data.length),
-      ...data.map(value => TValue({ type: valueType, value: value }))
+      new TInt8(TYPES[valueType]),
+      new TInt32(data.length),
+      ...data.map(value => new TValue({ type: valueType, value: value }))
     ]))
   }
 }
@@ -171,8 +169,8 @@ class TValue extends Buffer {
       case TYPES.DOUBLE: return new TDouble(value)
       case TYPES.BYTE: return new TInt8(value);
       case TYPES.STRING: return new TString(value);
-      case TYPES.MAP: return new TMAP(value);
-      case TYPES.LIST: return new TLIST(value);
+      case TYPES.MAP: return new TMap(value);
+      case TYPES.LIST: return new TList(value);
       case TYPES.STRUCT: return new TStruct(value);
       case TYPES.UTF16: return new TUtf16(value, 'utf16le');
       default: throw new Error(`Thrift: Unknown type ${type}`);
@@ -212,7 +210,7 @@ class Thrift extends Duplex {
     let nameLength = (yield 4).readInt32BE(0);
     let name = String(yield nameLength);
     let id = (yield 4).readInt32BE(0);
-    let fields = yield this.valueParser(TYPES.STRUCT);
+    let { fields } = yield this.valueParser(TYPES.STRUCT);
     type = METHODS_R[type];
     return { type, name, id, fields };
   }
@@ -262,7 +260,7 @@ class Thrift extends Duplex {
       type = TYPES_R[type];
       fields.push({ id, type, value });
     }
-    return fields;
+    return { fields };
   }
   *listParser() {
     let valueType = (yield 1).readInt8();
