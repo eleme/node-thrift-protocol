@@ -180,7 +180,9 @@ class TValue extends Buffer {
 
 class Thrift extends Duplex {
   static connect(settings, callback) {
-    let thrift = new this(net.connect(settings, () => callback && callback(thrift)));
+    let socket = net.connect(settings);
+    let thrift = new this(socket);
+    if (callback) thrift.on('connect', callback);
     return thrift;
   }
   static createServer(callback) {
@@ -194,6 +196,8 @@ class Thrift extends Duplex {
   }
   constructor(socket) {
     super({ writableObjectMode: true, readableObjectMode: true });
+    socket.on('connect', (...args) => this.emit('connect', ...args));
+    socket.on('timeout', (...args) => this.emit('timeout', ...args));
     socket.on('close', (...args) => this.emit('close', ...args));
     socket.on('error', (...args) => this.emit('error', ...args));
     this.socket = socket;
