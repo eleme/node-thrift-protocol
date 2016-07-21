@@ -18,15 +18,12 @@ let server = Thrift.createServer((thrift, x) => {
       ]
     });
   });
-}).listen(8101);
+}).listen();
 
 
 /* Client */
 
-let thrift = Thrift.connect({
-  port: 8101,
-  host: '127.0.0.1'
-});
+let thrift = Thrift.connect(server.address());
 
 thrift.write({
   name: 'ping',

@@ -201,19 +201,20 @@ class Thrift extends Duplex {
     socket.on('close', (...args) => this.emit('close', ...args));
     socket.on('error', (...args) => this.emit('error', ...args));
     this.socket = socket;
-    let stream = socket.pipe(new FrameGenerator(() => this.parser()));
-    this.wrap(stream);
+    this.fg = socket.pipe(new FrameGenerator(() => this.parser()));
+    this.wrap(this.fg);
   }
   _read() {}
   _write(message, enc, callback) {
     this.socket.write(new TMessage(message), enc, callback);
   }
   *parser() {
-    let version = (yield 4).readInt32BE(0);
+    let buf = (this.fg.readBytes(8) || (yield 8));
+    let version = buf.readInt32BE(0);
+    let nameLength = buf.readInt32BE(4);
     let type = version ^ VERSION_1;
-    let nameLength = (yield 4).readInt32BE(0);
     let name = String(yield nameLength);
-    let id = (yield 4).readInt32BE(0);
+    let id = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
     let { fields } = yield this.valueParser(TYPES.STRUCT);
     type = METHODS_R[type];
     return { type, name, id, fields };
@@ -222,14 +223,22 @@ class Thrift extends Duplex {
     switch (type) {
       case TYPES.STOP: return;
       case TYPES.VOID: return null;
-      case TYPES.BOOL: return !!(yield 1).readInt8(0);
-      case TYPES.BYTE: return (yield 1).readInt8(0);
-      case TYPES.I16: return (yield 2).readInt16BE(0);
-      case TYPES.I32: return (yield 4).readInt32BE(0);
+      case TYPES.BOOL: return !!(this.fg.readBytes(1) || (yield 1)).readInt8(0);
+      case TYPES.BYTE: return (this.fg.readBytes(1) || (yield 1)).readInt8(0);
+      case TYPES.I16: return (this.fg.readBytes(2) || (yield 2)).readInt16BE(0);
+      case TYPES.I32: return (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
       case TYPES.I64: return yield this.i64Parser();
-      case TYPES.DOUBLE: return (yield 8).readDoubleBE(0);
-      case TYPES.STRING: return String(yield (yield 4).readInt32BE(0));
-      case TYPES.UTF16: return (yield (yield 4).readInt32BE(0)).toString('utf16le');
+      case TYPES.DOUBLE: return (this.fg.readBytes(8) || (yield 8)).readDoubleBE(0);
+      case TYPES.STRING: {
+        let size = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
+        let buf = this.fg.readBytes(size) || (yield size);
+        return String(buf);
+      }
+      case TYPES.UTF16: {
+        let size = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
+        let buf = this.fg.readBytes(size) || (yield size);
+        return buf.toString('utf16le');
+      }
       case TYPES.STRUCT: return yield this.structParser();
       case TYPES.LIST: return yield this.listParser();
       case TYPES.MAP: return yield this.mapParser();
@@ -237,8 +246,9 @@ class Thrift extends Duplex {
     }
   }
   *i64Parser() {
-    let h = (yield 4).readUInt32BE();
-    let l = (yield 4).readUInt32BE();
+    let buf = (this.fg.readBytes(8) || (yield 8));
+    let h = buf.readUInt32BE(0);
+    let l = buf.readUInt32BE(4);
     const M = 0xFFFFFFFF;
     let minus = h & 0x80000000;
     if (minus) {
@@ -257,9 +267,9 @@ class Thrift extends Duplex {
   *structParser() {
     let fields = [];
     while (true) {
-      let type = (yield 1).readInt8(0);
+      let type = (this.fg.readBytes(1) || (yield 1)).readInt8(0);
       if (!type) break;
-      let id = (yield 2).readInt16BE(0);
+      let id = (this.fg.readBytes(2) || (yield 2)).readInt16BE(0);
       let value = yield this.valueParser(type);
       type = TYPES_R[type];
       fields.push({ id, type, value });
@@ -267,8 +277,9 @@ class Thrift extends Duplex {
     return { fields };
   }
   *listParser() {
-    let valueType = (yield 1).readInt8();
-    let count = (yield 4).readInt32BE();
+    let buf = (this.fg.readBytes(5) || (yield 5));
+    let valueType = buf.readInt8();
+    let count = buf.readInt32BE(1);
     let data = [];
     for (let i = 0; i < count; i++) {
       let value = yield this.valueParser(valueType);
@@ -278,9 +289,10 @@ class Thrift extends Duplex {
     return { valueType, data };
   }
   *mapParser() {
-    let keyType = (yield 1).readInt8();
-    let valueType = (yield 1).readInt8();
-    let count = (yield 4).readInt32BE();
+    let buf = (this.fg.readBytes(6) || (yield 6));
+    let keyType = buf.readInt8(0);
+    let valueType = buf.readInt8(1);
+    let count = buf.readInt32BE(2);
     let data = [];
     for (let i = 0; i < count; i++) {
       let key = yield this.valueParser(keyType);

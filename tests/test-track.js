@@ -16,15 +16,12 @@ let server = Thrift.createServer((thrift, x) => {
       fields
     });
   });
-}).listen(8102);
+}).listen();
 
 
 /* Client */
 
-let thrift = Thrift.connect({
-  port: 8102,
-  host: '127.0.0.1'
-});
+let thrift = Thrift.connect(server.address());
 
 const FIELDS = [
   { id: 1, type: 'BOOL', value: true },
