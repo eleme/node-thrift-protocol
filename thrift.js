@@ -231,8 +231,7 @@ class Thrift extends Duplex {
       case TYPES.DOUBLE: return (this.fg.readBytes(8) || (yield 8)).readDoubleBE(0);
       case TYPES.STRING: {
         let size = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
-        let buf = this.fg.readBytes(size) || (yield size);
-        return String(buf);
+        return this.fg.readBytes(size) || (yield size);
       }
       case TYPES.UTF16: {
         let size = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);

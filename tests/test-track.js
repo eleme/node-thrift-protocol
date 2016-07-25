@@ -102,7 +102,10 @@ thrift.write({
 
 thrift.on('data', message => {
   let { id, name, type, fields } = message;
-  // console.log(JSON.stringify(fields, null, 2));
+  JSON.stringify(fields, function(key) {
+    if (this[key] instanceof Buffer) this[key] = this[key] + '';
+    return this[key];
+  });
   assert.deepEqual(fields, FIELDS);
   process.exit(0);
 });
