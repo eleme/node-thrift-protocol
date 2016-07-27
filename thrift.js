@@ -80,9 +80,6 @@ class TDouble extends Buffer {
 class TInt64 extends Buffer {
   constructor(value = 0) {
     super(8);
-    if (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER) {
-      throw new Error('Thrift: JSON safe integer overflowed');
-    }
     const M = 0xFFFFFFFF;
     let minus = value < 0;
     if (minus) value = -value;
@@ -258,9 +255,6 @@ class Thrift extends Duplex {
       if (h > M) h = 0;
     }
     let value = h * (M + 1) + l;
-    if (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER) {
-      throw new Error('Thrift: JSON safe integer overflowed');
-    }
     return value;
   }
   *structParser() {

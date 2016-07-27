@@ -9,6 +9,7 @@
   "author": "rongyi.liu@ele.me",
   "license": "MIT",
   "dependencies": {
-    "FrameGenerator": "^0.2.5"
+    "FrameGenerator": "^0.2.5",
+    "bignumber.js": "^2.4.0"
   }
 }
