@@ -98,8 +98,9 @@ class TInt64 extends Buffer {
 }
 
 class TMessage extends Buffer {
-  constructor({ id, name, type, fields = [], strict = true }) {
+  constructor({ id, name, type, fields = [], header, strict = true }) {
     let bufs = [];
+    if (typeof header === 'object') bufs.push(new TStruct(header));
     type = METHODS[type];
     if (strict) {
       bufs.push(
@@ -112,7 +113,10 @@ class TMessage extends Buffer {
         new TInt8(type)
       );
     }
-    bufs.push(new TInt32(id), new TStruct({ fields }));
+    bufs.push(
+      new TInt32(id),
+      new TStruct({ fields })
+    );
     super(Buffer.concat(bufs));
   }
 }
@@ -208,13 +212,21 @@ class Thrift extends Duplex {
   *parser() {
     let buf = (this.fg.readBytes(8) || (yield 8));
     let version = buf.readInt32BE(0);
-    let nameLength = buf.readInt32BE(4);
-    let type = version ^ VERSION_1;
-    let name = String(yield nameLength);
-    let id = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
-    let { fields } = yield this.valueParser(TYPES.STRUCT);
-    type = METHODS_R[type];
-    return { type, name, id, fields };
+    if ((version & VERSION_1) === VERSION_1) {
+      let nameLength = buf.readInt32BE(4);
+      let type = version ^ VERSION_1;
+      let name = String(yield nameLength);
+      let id = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
+      let { fields } = yield this.valueParser(TYPES.STRUCT);
+      type = METHODS_R[type];
+      return { type, name, id, fields };
+    } else {
+      this.fg.position -= buf.length;
+      let header = yield this.structParser();
+      let result = yield this.parser();
+      result.header = header;
+      return result;
+    }
   }
   *valueParser(type) {
     switch (type) {
