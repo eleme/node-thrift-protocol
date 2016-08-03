@@ -12,7 +12,7 @@ let data = [
       data: Array.from({ length: 1000 }, (item, index) => {
         return {
           fields: Array.from({ length: 100 }, (item, index) => {
-            return { id: index, type: 'STRING', value: Math.random() + '' }
+            return { id: index, type: 'STRING', value: Math.random() + '' };
           })
         };
       })

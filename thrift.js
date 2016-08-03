@@ -144,7 +144,7 @@ class TMap extends Buffer {
         new TValue({ type: keyType, value: key }),
         new TValue({ type: valueType, value: value })
       ]))
-    ]))
+    ]));
   }
 }
 
@@ -154,7 +154,7 @@ class TList extends Buffer {
       new TInt8(TYPES[valueType]),
       new TInt32(data.length),
       ...data.map(value => new TValue({ type: valueType, value: value }))
-    ]))
+    ]));
   }
 }
 
@@ -163,11 +163,11 @@ class TValue extends Buffer {
     switch (TYPES[type]) {
       case TYPES.VOID: return new Buffer(0);
       case TYPES.BOOL: return new TInt8(value);
-      case TYPES.I8: return new TInt8(value)
-      case TYPES.I16: return new TInt16(value)
-      case TYPES.I32: return new TInt32(value)
-      case TYPES.I64: return new TInt64(value)
-      case TYPES.DOUBLE: return new TDouble(value)
+      case TYPES.I8: return new TInt8(value);
+      case TYPES.I16: return new TInt16(value);
+      case TYPES.I32: return new TInt32(value);
+      case TYPES.I64: return new TInt64(value);
+      case TYPES.DOUBLE: return new TDouble(value);
       case TYPES.BYTE: return new TInt8(value);
       case TYPES.STRING: return new TString(value);
       case TYPES.MAP: return new TMap(value);
@@ -271,7 +271,7 @@ class Thrift extends Duplex {
   }
   *structParser() {
     let fields = [];
-    while (true) {
+    for (;;) {
       let type = (this.fg.readBytes(1) || (yield 1)).readInt8(0);
       if (!type) break;
       let id = (this.fg.readBytes(2) || (yield 2)).readInt16BE(0);
