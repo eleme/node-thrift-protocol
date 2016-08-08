@@ -1,5 +1,6 @@
 const FrameGenerator = require('FrameGenerator');
 const net = require('net');
+const BigNumber = require('bignumber.js');
 const { Duplex } = require('stream');
 
 const VERSION_1 = 0x80010000 | 0;
@@ -79,19 +80,20 @@ class TDouble extends Buffer {
 
 class TInt64 extends Buffer {
   constructor(value = 0) {
-    super(8);
-    const M = 0xFFFFFFFF;
-    let minus = value < 0;
-    if (minus) value = -value;
-    let l = (value & M) >>> 0;
-    let h = (value - l) / 0x100000000;
-    if (minus) {
-      l = M - l;
-      h = M - h;
-      l++;
-      if (l > M) l = 0, h++;
-      if (h > M) h = 0;
+    if (!(value instanceof BigNumber)) value = new BigNumber(value);
+    value = value.toString(16);
+    let nega = false;
+    if (value[0] === '-') {
+      nega = true;
+      value = value.slice(1);
     }
+    let l = parseInt(value.slice(-8), 16) || 0;
+    let h = parseInt(value.slice(-16, -8), 16) || 0;
+    if (nega) {
+      l = ~l + 1 >>> 0;
+      h = ~h + !l >>> 0;
+    }
+    super(8);
     this.writeUInt32BE(h);
     this.writeUInt32BE(l, 4);
   }
@@ -258,16 +260,13 @@ class Thrift extends Duplex {
     let h = buf.readUInt32BE(0);
     let l = buf.readUInt32BE(4);
     const M = 0xFFFFFFFF;
-    let minus = h & 0x80000000;
-    if (minus) {
-      l = M - l;
-      h = M - h;
-      l++;
-      if (l > M) l = 0, h++;
-      if (h > M) h = 0;
+    let nega = h & 0x80000000;
+    if (nega) {
+      l = ~l + 1 >>> 0;
+      h = ~h + !l >>> 0;
     }
-    let value = h * (M + 1) + l;
-    return value;
+    let value = (nega ? '-' : '') + h.toString(16) + ('00000000' + l.toString(16)).slice(-8);
+    return new BigNumber(value, 16);
   }
   *structParser() {
     let fields = [];
