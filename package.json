@@ -1,6 +1,6 @@
 {
   "name": "node-thrift-protocol",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "description": "An implementation of thrift-protocol with node.",
   "main": "thrift.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "author": "rongyi.liu@ele.me",
   "license": "MIT",
   "dependencies": {
-    "FrameGenerator": "^0.2.5",
+    "FrameGenerator": "^0.2.6",
     "bignumber.js": "^2.4.0"
   }
 }

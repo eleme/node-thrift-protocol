@@ -3,6 +3,13 @@ const net = require('net');
 const BigNumber = require('bignumber.js');
 const { Duplex } = require('stream');
 
+class ThriftProtocolError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'THRIFT_PROTOCOL_ERROR';
+  }
+}
+
 const VERSION_1 = 0x80010000 | 0;
 
 const TYPES = {
@@ -176,7 +183,7 @@ class TValue extends Buffer {
       case TYPES.LIST: return new TList(value);
       case TYPES.STRUCT: return new TStruct(value);
       case TYPES.UTF16: return new TUtf16(value, 'utf16le');
-      default: throw new Error(`Thrift: Unknown type ${type}`);
+      default: throw new ThriftProtocolError(`Unknown type ${type}`);
     }
   }
 }
@@ -252,7 +259,7 @@ class Thrift extends Duplex {
       case TYPES.STRUCT: return yield this.structParser();
       case TYPES.LIST: return yield this.listParser();
       case TYPES.MAP: return yield this.mapParser();
-      default: throw new Error(`Thrift: Unknown type code ${type}`);
+      default: throw new ThriftProtocolError(`Unknown type code ${type}`);
     }
   }
   *i64Parser() {
