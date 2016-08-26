@@ -1,4 +1,5 @@
 const FrameGenerator = require('FrameGenerator');
+const ThriftTransform = require('./thrift-transform');
 const net = require('net');
 const BigNumber = require('bignumber.js');
 const { Duplex } = require('stream');
@@ -211,8 +212,13 @@ class Thrift extends Duplex {
     socket.on('close', (...args) => this.emit('close', ...args));
     socket.on('error', (...args) => this.emit('error', ...args));
     this.socket = socket;
-    this.fg = socket.pipe(new FrameGenerator(() => this.parser()));
-    this.wrap(this.fg);
+    this.fg = socket.pipe(
+      // new FrameGenerator(() => this.parser())
+      new ThriftTransform()
+    ).on('data', (data) => {
+      data = data.valueOf();
+      this.push(data);
+    });
   }
   _read() {}
   _write(message, enc, callback) {
