@@ -52,6 +52,7 @@ const METHODS_R = Object.keys(METHODS).reduce((base, key) => {
 
 class TString extends Buffer {
   constructor(str = '', enc = 'utf8') {
+    if (!(str instanceof Buffer)) str += '';
     let sbuf = new Buffer(str, enc);
     super(Buffer.concat([ new TInt32(sbuf.length), sbuf ]));
   }
