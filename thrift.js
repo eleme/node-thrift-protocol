@@ -61,28 +61,28 @@ class TString extends Buffer {
 class TInt32 extends Buffer {
   constructor(value = 0) {
     super(4);
-    this.writeInt32BE(value);
+    this.writeInt32BE(+value || 0);
   }
 }
 
 class TInt16 extends Buffer {
   constructor(value = 0) {
     super(2);
-    this.writeInt16BE(value);
+    this.writeInt16BE(+value || 0);
   }
 }
 
 class TInt8 extends Buffer {
   constructor(value = 0) {
     super(1);
-    this.writeInt8(value);
+    this.writeInt8(+value || 0);
   }
 }
 
 class TDouble extends Buffer {
   constructor(value = 0) {
     super(8);
-    this.writeDoubleBE(value);
+    this.writeDoubleBE(+value || 0);
   }
 }
 
