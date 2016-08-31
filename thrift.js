@@ -217,7 +217,11 @@ class Thrift extends Duplex {
   }
   _read() {}
   _write(message, enc, callback) {
-    this.socket.write(new TMessage(message), enc, callback);
+    try {
+      this.socket.write(new TMessage(message), enc, callback);
+    } catch(error) {
+      callback();
+    }
   }
   *parser() {
     let buf = (this.fg.readBytes(8) || (yield 8));
