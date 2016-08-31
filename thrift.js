@@ -10,6 +10,13 @@ class ThriftProtocolError extends Error {
   }
 }
 
+class ThriftRangeError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'THRIFT_RANGE_ERROR';
+  }
+}
+
 const VERSION_1 = 0x80010000 | 0;
 
 const TYPES = {
@@ -61,28 +68,41 @@ class TString extends Buffer {
 class TInt32 extends Buffer {
   constructor(value = 0) {
     super(4);
-    this.writeInt32BE(+value || 0);
+    value = +value || 0;
+    if (value < -2147483648 || value > 2147483647) {
+      throw new ThriftRangeError('${value} is out of int32 bounds');
+    }
+    this.writeInt32BE(value);
   }
 }
 
 class TInt16 extends Buffer {
   constructor(value = 0) {
     super(2);
-    this.writeInt16BE(+value || 0);
+    value = +value || 0;
+    if (value < -65536 || value > 65535) {
+      throw new ThriftRangeError('${value} is out of int16 bounds');
+    }
+    this.writeInt16BE(value);
   }
 }
 
 class TInt8 extends Buffer {
   constructor(value = 0) {
     super(1);
-    this.writeInt8(+value || 0);
+    value = +value || 0;
+    if (value < -128 || value > 127) {
+      throw new ThriftRangeError('${value} is out of int8 bounds');
+    }
+    this.writeInt8(value);
   }
 }
 
 class TDouble extends Buffer {
   constructor(value = 0) {
     super(8);
-    this.writeDoubleBE(+value || 0);
+    value = +value || 0;
+    this.writeDoubleBE(value);
   }
 }
 
@@ -221,6 +241,7 @@ class Thrift extends Duplex {
       this.socket.write(new TMessage(message), enc, callback);
     } catch(error) {
       callback();
+      throw error;
     }
   }
   *parser() {
