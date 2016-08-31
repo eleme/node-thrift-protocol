@@ -70,7 +70,7 @@ class TInt32 extends Buffer {
     super(4);
     value = +value || 0;
     if (value < -2147483648 || value > 2147483647) {
-      throw new ThriftRangeError('${value} is out of int32 bounds');
+      throw new ThriftRangeError(`${value} is out of int32 bounds`);
     }
     this.writeInt32BE(value);
   }
@@ -80,10 +80,17 @@ class TInt16 extends Buffer {
   constructor(value = 0) {
     super(2);
     value = +value || 0;
-    if (value < -65536 || value > 65535) {
-      throw new ThriftRangeError('${value} is out of int16 bounds');
+    if (value < -32768 || value > 32767) {
+      throw new ThriftRangeError(`${value} is out of int16 bounds`);
     }
     this.writeInt16BE(value);
+  }
+}
+
+class TBool extends Buffer {
+  constructor(value = 0) {
+    super(1);
+    this.writeInt8(+!!value);
   }
 }
 
@@ -92,7 +99,7 @@ class TInt8 extends Buffer {
     super(1);
     value = +value || 0;
     if (value < -128 || value > 127) {
-      throw new ThriftRangeError('${value} is out of int8 bounds');
+      throw new ThriftRangeError(`${value} is out of int8 bounds`);
     }
     this.writeInt8(value);
   }
@@ -108,7 +115,7 @@ class TDouble extends Buffer {
 
 class TInt64 extends Buffer {
   constructor(value = 0) {
-    if (!(value instanceof BigNumber)) value = new BigNumber(value);
+    if (!(value instanceof BigNumber)) value = new BigNumber(+value || 0);
     value = value.toString(16);
     let nega = false;
     if (value[0] === '-') {
@@ -192,7 +199,7 @@ class TValue extends Buffer {
   constructor({ type, value }) {
     switch (TYPES[type]) {
       case TYPES.VOID: return new Buffer(0);
-      case TYPES.BOOL: return new TInt8(value);
+      case TYPES.BOOL: return new TBool(value);
       case TYPES.I8: return new TInt8(value);
       case TYPES.I16: return new TInt16(value);
       case TYPES.I32: return new TInt32(value);
@@ -237,12 +244,10 @@ class Thrift extends Duplex {
   }
   _read() {}
   _write(message, enc, callback) {
-    try {
-      this.socket.write(new TMessage(message), enc, callback);
-    } catch(error) {
-      callback();
-      throw error;
-    }
+    this.socket.write(message, enc, callback);
+  }
+  write(rawMessage) {
+    return super.write(new TMessage(rawMessage));
   }
   *parser() {
     let buf = (this.fg.readBytes(8) || (yield 8));

@@ -3,7 +3,7 @@ let Thrift = require('../thrift');
 
 /* Server */
 
-let server = Thrift.createServer((thrift, x) => {
+let server = Thrift.createServer((thrift) => {
   thrift.on('data', message => {
     let { name, id, type } = message;
     assert.equal(name, 'ping');
