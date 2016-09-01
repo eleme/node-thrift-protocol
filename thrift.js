@@ -17,6 +17,13 @@ class ThriftRangeError extends Error {
   }
 }
 
+class ThriftTypeError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'THRIFT_TYPE_ERROR';
+  }
+}
+
 const VERSION_1 = 0x80010000 | 0;
 
 const TYPES = {
@@ -65,13 +72,39 @@ class TString extends Buffer {
   }
 }
 
+class TBool extends Buffer {
+  constructor(value = 0) {
+    super(1);
+    if (typeof value !== 'boolean') {
+      if (value instanceof Object) value = value.valueOf();
+      if (value instanceof Object) value = value.toString();
+      switch (true) {
+        case value === true:
+        case value === false:
+          break;
+        case value === 'true':
+          value = true;
+          break;
+        case value === 'false':
+          value = false;
+          break;
+        case typeof value === 'number':
+          value = !!value;
+          break;
+        default:
+          throw new ThriftTypeError(`cannot convert "${value}" to boolean, require "true" or "false"`);
+      }
+    }
+    this.writeInt8(+!!value);
+  }
+}
+
 class TInt32 extends Buffer {
   constructor(value = 0) {
     super(4);
-    value = +value || 0;
-    if (value < -2147483648 || value > 2147483647) {
-      throw new ThriftRangeError(`${value} is out of int32 bounds`);
-    }
+    if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to int32`);
+    value = +value;
+    if (value < -2147483648 || value > 2147483647) throw new ThriftRangeError(`${value} is out of int32 bounds`);
     this.writeInt32BE(value);
   }
 }
@@ -79,25 +112,18 @@ class TInt32 extends Buffer {
 class TInt16 extends Buffer {
   constructor(value = 0) {
     super(2);
-    value = +value || 0;
-    if (value < -32768 || value > 32767) {
-      throw new ThriftRangeError(`${value} is out of int16 bounds`);
-    }
+    if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to int16`);
+    value = +value;
+    if (value < -32768 || value > 32767) throw new ThriftRangeError(`${value} is out of int16 bounds`);
     this.writeInt16BE(value);
-  }
-}
-
-class TBool extends Buffer {
-  constructor(value = 0) {
-    super(1);
-    this.writeInt8(+!!value);
   }
 }
 
 class TInt8 extends Buffer {
   constructor(value = 0) {
     super(1);
-    value = +value || 0;
+    if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to int8`);
+    value = +value;
     if (value < -128 || value > 127) {
       throw new ThriftRangeError(`${value} is out of int8 bounds`);
     }
@@ -108,13 +134,15 @@ class TInt8 extends Buffer {
 class TDouble extends Buffer {
   constructor(value = 0) {
     super(8);
-    value = +value || 0;
+    if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to double`);
+    value = +value;
     this.writeDoubleBE(value);
   }
 }
 
 class TInt64 extends Buffer {
   constructor(value = 0) {
+    if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to i64`);
     if (!(value instanceof BigNumber)) value = new BigNumber(+value || 0);
     value = value.toString(16);
     let nega = false;

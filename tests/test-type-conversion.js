@@ -33,12 +33,10 @@ const test = (type, value1, value2) => {
   });
 };
 
-[ 'BYTE', 'I16', 'I32', 'I64' ].forEach(type => {
+[ 'BYTE', 'I16', 'I32', 'I64', 'DOUBLE' ].forEach(type => {
   test(type, '123', 123);
   test(type, true, 1);
   test(type, false, 0);
-  test(type, null, 0);
-  test(type, {}, 0);
 });
 
 test('STRING', 123, '123');
@@ -47,8 +45,14 @@ test('STRING', true, 'true');
 test('STRING', false, 'false');
 test('STRING', {}, '[object Object]');
 
-test('BOOL', 'hehe', true);
-test('BOOL', null, false);
-test('BOOL', 1, true);
+test('BOOL', 'true', true);
+test('BOOL', 'false', false);
 test('BOOL', 0, false);
-test('BOOL', {}, true);
+test('BOOL', 1, true);
+test('BOOL', 2, true);
+test('BOOL', new Boolean(true), true);
+test('BOOL', new Boolean(false), false);
+test('BOOL', { valueOf() { return 1; } }, true);
+test('BOOL', { valueOf() { return 0; } }, false);
+test('BOOL', { toString() { return 'true'; } }, true);
+test('BOOL', { toString() { return 'false'; } }, false);
