@@ -135,15 +135,17 @@ class TDouble extends Buffer {
   constructor(value = 0) {
     super(8);
     if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to double`);
-    value = +value;
-    this.writeDoubleBE(value);
+    this.writeDoubleBE(+value);
   }
 }
 
 class TInt64 extends Buffer {
   constructor(value = 0) {
+    if (value instanceof Object) value = value.valueOf();
+    if (value instanceof Object) value = value.toString();
+    if (typeof value === 'boolean') value = +value;
     if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to i64`);
-    if (!(value instanceof BigNumber)) value = new BigNumber(+value || 0);
+    if (!(value instanceof BigNumber)) value = new BigNumber(value);
     value = value.toString(16);
     let nega = false;
     if (value[0] === '-') {
