@@ -11,5 +11,8 @@
   "dependencies": {
     "FrameGenerator": "^0.2.6",
     "bignumber.js": "^2.4.0"
+  },
+  "devDependencies": {
+    "sequence-tester": "^0.1.1"
   }
 }

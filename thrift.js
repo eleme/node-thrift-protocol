@@ -268,6 +268,7 @@ class Thrift extends Duplex {
     socket.on('timeout', (...args) => this.emit('timeout', ...args));
     socket.on('close', (...args) => this.emit('close', ...args));
     socket.on('error', (...args) => this.emit('error', ...args));
+    socket.on('end', (...args) => this.emit('end', ...args));
     this.socket = socket;
     this.fg = socket.pipe(new FrameGenerator(() => this.parser()));
     this.wrap(this.fg);
