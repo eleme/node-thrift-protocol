@@ -288,7 +288,7 @@ class Thrift extends Duplex {
       let type = version ^ VERSION_1;
       let name = String(yield nameLength);
       let id = (this.fg.readBytes(4) || (yield 4)).readInt32BE(0);
-      let fields = yield this.valueParser(TYPES.STRUCT).fields;
+      let fields = (yield this.valueParser(TYPES.STRUCT)).fields;
       type = METHODS_R[type];
       return { type, name, id, fields };
     } else {
