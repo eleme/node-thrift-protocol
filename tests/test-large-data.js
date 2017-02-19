@@ -11,8 +11,8 @@ let data = [
       valueType: 'STRUCT',
       data: Array.from({ length: 1000 }, (item, index) => {
         return {
-          fields: Array.from({ length: 100 }, (item, index) => {
-            return { id: index, type: 'STRING', value: Math.random() + '' };
+          fields: Array.from({ length: 1000 }, (item, index) => {
+            return { id: index, type: 'DOUBLE', value: Math.random() };
           })
         };
       })

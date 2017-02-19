@@ -4,7 +4,8 @@
   "description": "An implementation of thrift-protocol with node.",
   "main": "thrift.js",
   "scripts": {
-    "test": "./tests/test.sh"
+    "test": "./tests/test.sh",
+    "build": "node-gyp configure build"
   },
   "author": "rongyi.liu@ele.me",
   "license": "MIT",
