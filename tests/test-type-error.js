@@ -28,16 +28,24 @@ it('type error must be caught', () => {
     test(type, false, 'OK');
     test(type, 'hehe', 'THRIFT_TYPE_ERROR');
     test(type, null, 'THRIFT_TYPE_ERROR');
+    test(type, void 0, 'OK');
+    test(type, '', 'OK');
+    test(type, new Proxy({}, {}), 'THRIFT_TYPE_ERROR');
+    test(type, Symbol(), 'TypeError');
   });
 
   test('BOOL', true, 'OK');
   test('BOOL', new Boolean(true), 'OK');
   test('BOOL', 'true', 'OK');
+  test('BOOL', 'false', 'OK');
   test('BOOL', 1, 'OK');
   test('BOOL', { valueOf() { return 1; } }, 'OK');
   test('BOOL', null, 'THRIFT_TYPE_ERROR');
   test('BOOL', '123', 'THRIFT_TYPE_ERROR');
   test('BOOL', {}, 'THRIFT_TYPE_ERROR');
+  test('BOOL', '', 'THRIFT_TYPE_ERROR');
+  test('BOOL', new Proxy({}, {}), 'THRIFT_TYPE_ERROR');
+  test('BOOL', Symbol(), 'TypeError');
 
   test('STRING', '123', 'OK');
   test('STRING', true, 'OK');
@@ -47,6 +55,9 @@ it('type error must be caught', () => {
   test('STRING', new String(true), 'OK');
   test('STRING', 'true', 'OK');
   test('STRING', 'false', 'OK');
+  test('STRING', '', 'OK');
   test('STRING', null, 'OK');
+  test('STRING', new Proxy({}, {}), 'OK');
+  test('STRING', Symbol(), 'TypeError');
 
 });

@@ -145,6 +145,7 @@ class TInt64 extends Buffer {
     if (value instanceof Object) value = value.toString();
     if (typeof value === 'boolean') value = +value;
     if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to i64`);
+    if (value === '') value = 0;
     if (!(value instanceof BigNumber)) value = new BigNumber(value);
     value = value.toString(16);
     let nega = false;

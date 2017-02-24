@@ -1,6 +1,6 @@
 {
   "name": "node-thrift-protocol",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "An implementation of thrift-protocol with node.",
   "main": "thrift.js",
   "scripts": {
