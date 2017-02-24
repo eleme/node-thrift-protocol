@@ -1,18 +1,22 @@
 let assert = require('assert');
 let Thrift = require('../thrift');
 
-/* Server */
+it('protocol error must be caught', done => {
 
-let server = Thrift.createServer((thrift, x) => {
-  thrift.on('error', error => {
-    assert(error.name, 'THRIFT_PROTOCOL_ERROR');
-    process.exit(0);
-  });
-}).listen();
+  /* Server */
+
+  let server = Thrift.createServer((thrift, x) => {
+    thrift.on('error', error => {
+      assert(error.name, 'THRIFT_PROTOCOL_ERROR');
+      done();
+    });
+  }).listen();
 
 
-/* Client */
+  /* Client */
 
-let { port } = server.address();
+  let { port } = server.address();
 
-require('http').request({ port }).end();
+  require('http').request({ port }).end();
+
+});
