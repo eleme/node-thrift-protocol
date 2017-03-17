@@ -22,7 +22,6 @@ it('simple invoking must be supported', done => {
     });
   }).listen();
 
-
   /* Client */
 
   let thrift = Thrift.connect(server.address());

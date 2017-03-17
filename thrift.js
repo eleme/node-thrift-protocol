@@ -241,7 +241,7 @@ class TValue extends Buffer {
       case TYPES.MAP: return new TMap(value);
       case TYPES.LIST: return new TList(value);
       case TYPES.STRUCT: return new TStruct(value);
-      case TYPES.UTF16: return new TUtf16(value, 'utf16le');
+      case TYPES.UTF16: return new TString(value, 'utf16le');
       default: throw new ThriftProtocolError(`Unknown type ${type}`);
     }
   }
@@ -329,7 +329,6 @@ class Thrift extends Duplex {
     let buf = (this.fg.readBytes(8) || (yield 8));
     let h = buf.readUInt32BE(0);
     let l = buf.readUInt32BE(4);
-    const M = 0xFFFFFFFF;
     let nega = h & 0x80000000;
     if (nega) {
       l = ~l + 1 >>> 0;

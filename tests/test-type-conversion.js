@@ -17,7 +17,6 @@ it('type conversion must be supported', done => {
     });
   }).listen();
 
-
   /* Client */
 
   let thrift = Thrift.connect(server.address());
@@ -52,8 +51,8 @@ it('type conversion must be supported', done => {
   test('BOOL', 0, false);
   test('BOOL', 1, true);
   test('BOOL', 2, true);
-  test('BOOL', new Boolean(true), true);
-  test('BOOL', new Boolean(false), false);
+  test('BOOL', Object(true), true);
+  test('BOOL', Object(false), false);
   test('BOOL', { valueOf() { return 1; } }, true);
   test('BOOL', { valueOf() { return 0; } }, false);
   test('BOOL', { toString() { return 'true'; } }, true);

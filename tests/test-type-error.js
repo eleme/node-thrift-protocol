@@ -3,18 +3,20 @@ let Thrift = require('../thrift');
 
 it('type error must be caught', () => {
 
-  let server = Thrift.createServer(thrift => { /* pass */ }).listen();
+  let server = Thrift.createServer(() => { /* pass */ }).listen();
   let thrift = Thrift.connect(server.address());
 
   const test = (type, value, expectation) => {
     try {
-      let a = thrift.write({
+      thrift.write({
         name: 'test',
         type: 'CALL',
         id: 0,
         fields: [ { id: 1, type, value } ]
       });
-      throw { name: 'OK' };
+      let error = new Error();
+      error.name = 'OK';
+      throw error;
     } catch (error) {
       assert.equal(error.name, expectation);
     }
@@ -23,7 +25,7 @@ it('type error must be caught', () => {
   [ 'BYTE', 'I16', 'I32', 'I64', 'DOUBLE' ].forEach(type => {
     test(type, 123, 'OK');
     test(type, '123', 'OK');
-    test(type, new Number(123), 'OK');
+    test(type, Object(123), 'OK');
     test(type, true, 'OK');
     test(type, false, 'OK');
     test(type, 'hehe', 'THRIFT_TYPE_ERROR');
@@ -35,7 +37,7 @@ it('type error must be caught', () => {
   });
 
   test('BOOL', true, 'OK');
-  test('BOOL', new Boolean(true), 'OK');
+  test('BOOL', Object(true), 'OK');
   test('BOOL', 'true', 'OK');
   test('BOOL', 'false', 'OK');
   test('BOOL', 1, 'OK');
@@ -50,9 +52,9 @@ it('type error must be caught', () => {
   test('STRING', '123', 'OK');
   test('STRING', true, 'OK');
   test('STRING', false, 'OK');
-  test('STRING', new Boolean(true), 'OK');
-  test('STRING', new Number(true), 'OK');
-  test('STRING', new String(true), 'OK');
+  test('STRING', Object(true), 'OK');
+  test('STRING', Object(true), 'OK');
+  test('STRING', Object(true), 'OK');
   test('STRING', 'true', 'OK');
   test('STRING', 'false', 'OK');
   test('STRING', '', 'OK');

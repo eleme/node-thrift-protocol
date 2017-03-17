@@ -5,7 +5,7 @@ it('transmited data must correct', done => {
 
   /* Server */
 
-  let server = Thrift.createServer((thrift, x) => {
+  let server = Thrift.createServer((thrift) => {
     thrift.on('data', message => {
       let { name, id, type, fields } = message;
       assert.equal(name, 'track');
@@ -19,7 +19,6 @@ it('transmited data must correct', done => {
       });
     });
   }).listen();
-
 
   /* Client */
 
@@ -103,7 +102,7 @@ it('transmited data must correct', done => {
   });
 
   thrift.on('data', message => {
-    let { id, name, type, fields } = message;
+    let { fields } = message;
     JSON.stringify(fields, function(key) {
       if (this[key] instanceof Buffer) this[key] = this[key] + '';
       return this[key];

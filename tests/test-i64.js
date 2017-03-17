@@ -6,9 +6,9 @@ it('i64 must be supportd', done => {
 
   /* Server */
 
-  let server = Thrift.createServer((thrift, x) => {
+  let server = Thrift.createServer((thrift) => {
     thrift.on('data', message => {
-      let { name, id, type, fields } = message;
+      let { name, id, fields } = message;
       thrift.write({
         name,
         id,
@@ -19,7 +19,6 @@ it('i64 must be supportd', done => {
       });
     });
   }).listen();
-
 
   /* Client */
 
@@ -34,7 +33,7 @@ it('i64 must be supportd', done => {
 
   let inc = 0;
   thrift.on('data', message => {
-    let { id, name, type, fields } = message;
+    let { id, fields } = message;
     let { value } = fields[0];
     assert.equal(value + '', tests[id]);
     if (++inc === 4) done();

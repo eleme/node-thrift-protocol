@@ -4,15 +4,20 @@
   "description": "An implementation of thrift-protocol with node.",
   "main": "thrift.js",
   "scripts": {
-    "test": "mocha tests"
+    "lint": "eslint .",
+    "mocha": "mocha tests",
+    "test": "eslint . && mocha tests"
   },
   "author": "rongyi.liu@ele.me",
+  "repository": "https://github.com/eleme/node-thrift-protocol",
   "license": "MIT",
   "dependencies": {
     "FrameGenerator": "^0.2.6",
     "bignumber.js": "^2.4.0"
   },
   "devDependencies": {
+    "eslint": "^3.17.1",
+    "eslint-config-elemefe": "^0.2.0",
     "mocha": "^3.2.0",
     "sequence-tester": "^0.1.1"
   }

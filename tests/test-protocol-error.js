@@ -5,13 +5,12 @@ it('protocol error must be caught', done => {
 
   /* Server */
 
-  let server = Thrift.createServer((thrift, x) => {
+  let server = Thrift.createServer((thrift) => {
     thrift.on('error', error => {
       assert(error.name, 'THRIFT_PROTOCOL_ERROR');
       done();
     });
   }).listen();
-
 
   /* Client */
 

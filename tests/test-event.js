@@ -1,4 +1,3 @@
-let assert = require('assert');
 let Thrift = require('../thrift');
 let SequenceTester = require('sequence-tester');
 
@@ -13,7 +12,6 @@ it('event must be triggered in correct timing', () => {
     thrift.on('close', () => seq.assert(2));
     thrift.on('error', error => { throw error; });
   }).listen();
-
 
   /* Client */
 

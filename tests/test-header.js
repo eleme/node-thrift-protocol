@@ -5,7 +5,7 @@ it('thrift header must be supported', done => {
 
   /* Server */
 
-  let server = Thrift.createServer((thrift, x) => {
+  let server = Thrift.createServer((thrift) => {
     thrift.on('data', message => {
       let { name, id, type, header } = message;
       assert.equal(name, 'ping');
@@ -22,7 +22,6 @@ it('thrift header must be supported', done => {
       });
     });
   }).listen();
-
 
   /* Client */
 

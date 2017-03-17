@@ -3,18 +3,20 @@ let Thrift = require('../thrift');
 
 it('range error must be caught', done => {
 
-  let server = Thrift.createServer(thrift => { /* pass */ }).listen();
+  let server = Thrift.createServer(() => { /* pass */ }).listen();
   let thrift = Thrift.connect(server.address());
 
   const test = (type, value, expectation) => {
     try {
-      let a = thrift.write({
+      thrift.write({
         name: 'test',
         type: 'CALL',
         id: 0,
         fields: [ { id: 1, type, value } ]
       });
-      throw { name: 'OK' };
+      let error = new Error();
+      error.name = 'OK';
+      throw error;
     } catch (error) {
       assert.equal(error.name, expectation);
     }

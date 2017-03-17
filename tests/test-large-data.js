@@ -11,7 +11,7 @@ it('large-data must not thrown', done => {
       type: 'LIST',
       value: {
         valueType: 'STRUCT',
-        data: Array.from({ length: 1000 }, (item, index) => {
+        data: Array.from({ length: 1000 }, () => {
           return {
             fields: Array.from({ length: 100 }, (item, index) => {
               return { id: index, type: 'STRING', value: Math.random() + '' };
@@ -24,7 +24,7 @@ it('large-data must not thrown', done => {
 
   let server = Thrift.createServer((thrift) => {
     thrift.on('data', message => {
-      let { name, id, type } = message;
+      let { name, id } = message;
       thrift.write({
         name,
         id,
@@ -33,7 +33,6 @@ it('large-data must not thrown', done => {
       });
     });
   }).listen();
-
 
   /* Client */
 
@@ -46,7 +45,7 @@ it('large-data must not thrown', done => {
   });
 
   thrift.on('data', message => {
-    let { id, name, type, fields } = message;
+    let { fields } = message;
     let field = fields[0];
     let result = field.value.data.map(item => {
       let temp = {};
