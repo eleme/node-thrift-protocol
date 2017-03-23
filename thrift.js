@@ -266,11 +266,7 @@ class TMessage {
   }
 
   tVoid() {
-    this.bufs.push({
-      method: 'tVoid',
-      length: 0
-    });
-    this.totalLength += 0;
+    // noop
   }
 
   tValue({ type, value }) {
