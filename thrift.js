@@ -91,19 +91,8 @@ class TMessage {
     for (let i = 0; i < this.bufs.length; i++) {
       const { method, length, value } = this.bufs[i];
 
-      if (method === 'tInt64') {
-        const { h, l } = value;
-
-        buf.writeUInt32BE(h, this.offset);
-        this.offset += 4;
-        buf.writeUInt32BE(l, this.offset);
-        this.offset += 4;
-      } else if (method === 'iVoid') {
-        // 什么都不做可以吗
-      } else {
-        buf[method](value, this.offset);
-        this.offset += length;
-      }
+      buf[method](value, this.offset);
+      this.offset += length;
     }
 
     return buf;
@@ -233,9 +222,14 @@ class TMessage {
     }
 
     this.bufs.push({
-      method: 'tInt64',
-      length: 8,
-      value: { h, l }
+      method: 'writeUInt32BE',
+      length: 4,
+      value: h
+    });
+    this.bufs.push({
+      method: 'writeUInt32BE',
+      length: 4,
+      value: l
     });
     this.totalLength += 8;
   }
