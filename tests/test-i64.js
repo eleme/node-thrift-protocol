@@ -1,6 +1,6 @@
 let assert = require('assert');
 let BigNumber = require('bignumber.js');
-let Thrift = require('../thrift');
+let Thrift = require('../');
 
 it('i64 must be supportd', done => {
 
