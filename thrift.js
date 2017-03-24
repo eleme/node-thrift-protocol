@@ -91,7 +91,11 @@ class TMessage {
     for (let i = 0; i < this.bufs.length; i++) {
       const { method, length, value } = this.bufs[i];
 
-      buf[method](value, this.offset);
+      if (method === 'copy') {
+        value.copy(buf, this.offset);
+      } else {
+        buf[method](value, this.offset);
+      }
       this.offset += length;
     }
 
@@ -110,13 +114,19 @@ class TMessage {
     this.totalLength += 4;
 
     if (str instanceof Buffer) {
-      str = str.toString();
+      this.bufs.push({
+        method: 'copy',
+        length: length,
+        value: str
+      });
+    } else {
+      this.bufs.push({
+        method: 'write',
+        length: length,
+        value: str
+      });
     }
-    this.bufs.push({
-      method: 'write',
-      length: length,
-      value: str
-    });
+
     this.totalLength += length;
   }
 
