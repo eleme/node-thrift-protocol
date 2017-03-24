@@ -72,7 +72,7 @@ class TMessage {
 
     if (typeof header === 'object') {
       this.tStruct(header);
-    };
+    }
     type = METHODS[type];
     if (strict) {
       this.tInt32(VERSION_1 | type);
