@@ -64,17 +64,73 @@ const METHODS_R = Object.keys(METHODS).reduce((base, key) => {
   return base;
 }, {});
 
-class TString extends Buffer {
-  constructor(str = '', enc = 'utf8') {
-    if (!(str instanceof Buffer)) str += '';
-    let sbuf = new Buffer(str, enc);
-    super(Buffer.concat([ new TInt32(sbuf.length), sbuf ]));
-  }
-}
+class TMessage {
+  constructor({ id, name, type, fields = [], header, strict = true }) {
+    this.bufs = [];
+    this.totalLength = 0;
+    this.offset = 0;
 
-class TBool extends Buffer {
-  constructor(value = 0) {
-    super(1);
+    if (typeof header === 'object') {
+      this.tStruct(header);
+    }
+    type = METHODS[type];
+    if (strict) {
+      this.tInt32(VERSION_1 | type);
+      this.tString(name);
+    } else {
+      this.tString(name);
+      this.tInt8(type);
+    }
+    this.tInt32(id);
+    this.tStruct({ fields });
+  }
+
+  toBuffer() {
+    const buf = Buffer.allocUnsafe(this.totalLength);
+
+    for (let i = 0; i < this.bufs.length; i++) {
+      const { method, length, value } = this.bufs[i];
+
+      if (method === 'copy') {
+        value.copy(buf, this.offset);
+      } else {
+        buf[method](value, this.offset);
+      }
+      this.offset += length;
+    }
+
+    return buf;
+  }
+
+  tString(str = '', enc = 'utf8') {
+    if (!(str instanceof Buffer)) str += '';
+
+    const length = Buffer.byteLength(str, enc);
+    this.bufs.push({
+      method: 'writeInt32BE',
+      length: 4,
+      value: length
+    });
+    this.totalLength += 4;
+
+    if (str instanceof Buffer) {
+      this.bufs.push({
+        method: 'copy',
+        length: length,
+        value: str
+      });
+    } else {
+      this.bufs.push({
+        method: 'write',
+        length: length,
+        value: str
+      });
+    }
+
+    this.totalLength += length;
+  }
+
+  tBool(value = 0) {
     if (typeof value !== 'boolean') {
       if (value instanceof Object) value = value.valueOf();
       if (value instanceof Object) value = value.toString();
@@ -95,52 +151,67 @@ class TBool extends Buffer {
           throw new ThriftTypeError(`cannot convert "${value}" to boolean, require "true" or "false"`);
       }
     }
-    this.writeInt8(+!!value);
+    this.bufs.push({
+      method: 'writeInt8',
+      length: 1,
+      value: value
+    });
+    this.totalLength += 1;
   }
-}
 
-class TInt32 extends Buffer {
-  constructor(value = 0) {
-    super(4);
+  tInt32(value = 0) {
     if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to int32`);
     value = +value;
     if (value < -2147483648 || value > 2147483647) throw new ThriftRangeError(`${value} is out of int32 bounds`);
-    this.writeInt32BE(value);
-  }
-}
 
-class TInt16 extends Buffer {
-  constructor(value = 0) {
-    super(2);
+    this.bufs.push({
+      method: 'writeInt32BE',
+      length: 4,
+      value
+    });
+    this.totalLength += 4;
+  }
+
+  tInt16(value = 0) {
     if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to int16`);
     value = +value;
     if (value < -32768 || value > 32767) throw new ThriftRangeError(`${value} is out of int16 bounds`);
-    this.writeInt16BE(value);
-  }
-}
 
-class TInt8 extends Buffer {
-  constructor(value = 0) {
-    super(1);
+    this.bufs.push({
+      method: 'writeInt16BE',
+      length: 2,
+      value
+    });
+    this.totalLength += 2;
+  }
+
+  tInt8(value = 0) {
     if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to int8`);
     value = +value;
     if (value < -128 || value > 127) {
       throw new ThriftRangeError(`${value} is out of int8 bounds`);
     }
-    this.writeInt8(value);
-  }
-}
 
-class TDouble extends Buffer {
-  constructor(value = 0) {
-    super(8);
+    this.bufs.push({
+      method: 'writeInt8',
+      length: 1,
+      value
+    });
+    this.totalLength += 1;
+  }
+
+  tDouble(value = 0) {
     if (+value !== +value || value === null) throw new ThriftTypeError(`cannot convert "${value}" to double`);
-    this.writeDoubleBE(+value);
-  }
-}
 
-class TInt64 extends Buffer {
-  constructor(value = 0) {
+    this.bufs.push({
+      method: 'writeDoubleBE',
+      length: 8,
+      value
+    });
+    this.totalLength += 8;
+  }
+
+  tInt64(value = 0) {
     if (value instanceof Object) value = value.valueOf();
     if (value instanceof Object) value = value.toString();
     if (typeof value === 'boolean') value = +value;
@@ -159,89 +230,64 @@ class TInt64 extends Buffer {
       l = ~l + 1 >>> 0;
       h = ~h + !l >>> 0;
     }
-    super(8);
-    this.writeUInt32BE(h);
-    this.writeUInt32BE(l, 4);
-  }
-}
 
-class TMessage extends Buffer {
-  constructor({ id, name, type, fields = [], header, strict = true }) {
-    let bufs = [];
-    if (typeof header === 'object') bufs.push(new TStruct(header));
-    type = METHODS[type];
-    if (strict) {
-      bufs.push(
-        new TInt32(VERSION_1 | type),
-        new TString(name)
-      );
-    } else {
-      bufs.push(
-        new TString(name),
-        new TInt8(type)
-      );
-    }
-    bufs.push(
-      new TInt32(id),
-      new TStruct({ fields })
-    );
-    super(Buffer.concat(bufs));
+    this.bufs.push({
+      method: 'writeUInt32BE',
+      length: 4,
+      value: h
+    });
+    this.bufs.push({
+      method: 'writeUInt32BE',
+      length: 4,
+      value: l
+    });
+    this.totalLength += 8;
   }
-}
 
-class TStruct extends Buffer {
-  constructor({ fields }) {
-    super(Buffer.concat([
-      ...[].concat(...fields.map(({ type, id, value }) => [
-        new TInt8(TYPES[type]),
-        new TInt16(id),
-        new TValue({ type, value })
-      ])),
-      new TInt8(TYPES.STOP)
-    ]));
+  tStruct({ fields }) {
+    fields.forEach(({ type, id, value }) => {
+      this.tInt8(TYPES[type]);
+      this.tInt16(id);
+      this.tValue({ type, value });
+    });
+    this.tInt8(TYPES.STOP);
   }
-}
 
-class TMap extends Buffer {
-  constructor({ keyType, valueType, data }) {
-    super(Buffer.concat([
-      new TInt8(TYPES[keyType]),
-      new TInt8(TYPES[valueType]),
-      new TInt32(data.length),
-      ...[].concat(...data.map(({ key, value }) => [
-        new TValue({ type: keyType, value: key }),
-        new TValue({ type: valueType, value: value })
-      ]))
-    ]));
+  tMap({ keyType, valueType, data }) {
+    this.tInt8(TYPES[keyType]);
+    this.tInt8(TYPES[valueType]);
+    this.tInt32(data.length);
+    data.forEach(({ key, value }) => {
+      this.tValue({ type: keyType, value: key });
+      this.tValue({ type: valueType, value: value });
+    });
   }
-}
 
-class TList extends Buffer {
-  constructor({ valueType, data }) {
-    super(Buffer.concat([
-      new TInt8(TYPES[valueType]),
-      new TInt32(data.length),
-      ...data.map(value => new TValue({ type: valueType, value: value }))
-    ]));
+  tList({ valueType, data }) {
+    this.tInt8(TYPES[valueType]);
+    this.tInt32(data.length);
+    data.forEach(value => this.tValue({ type: valueType, value: value }));
   }
-}
 
-class TValue extends Buffer {
-  constructor({ type, value }) {
+  tVoid() {
+    // noop
+  }
+
+  tValue({ type, value }) {
     switch (TYPES[type]) {
-      case TYPES.VOID: return new Buffer(0);
-      case TYPES.BOOL: return new TBool(value);
-      case TYPES.I8: return new TInt8(value);
-      case TYPES.I16: return new TInt16(value);
-      case TYPES.I32: return new TInt32(value);
-      case TYPES.I64: return new TInt64(value);
-      case TYPES.DOUBLE: return new TDouble(value);
-      case TYPES.BYTE: return new TInt8(value);
-      case TYPES.STRING: return new TString(value);
-      case TYPES.MAP: return new TMap(value);
-      case TYPES.LIST: return new TList(value);
-      case TYPES.STRUCT: return new TStruct(value);
-      case TYPES.UTF16: return new TString(value, 'utf16le');
+      case TYPES.VOID: return this.tVoid();
+      case TYPES.BOOL: return this.tBool(value);
+      case TYPES.I8: return this.tInt8(value);
+      case TYPES.I16: return this.tInt16(value);
+      case TYPES.I32: return this.tInt32(value);
+      case TYPES.I64: return this.tInt64(value);
+      case TYPES.DOUBLE: return this.tDouble(value);
+      case TYPES.BYTE: return this.tInt8(value);
+      case TYPES.STRING: return this.tString(value);
+      case TYPES.MAP: return this.tMap(value);
+      case TYPES.LIST: return this.tList(value);
+      case TYPES.STRUCT: return this.tStruct(value);
+      case TYPES.UTF16: return this.tString(value, 'utf16le');
       default: throw new ThriftProtocolError(`Unknown type ${type}`);
     }
   }
@@ -279,7 +325,7 @@ class Thrift extends Duplex {
     this.socket.write(message, enc, callback);
   }
   write(rawMessage) {
-    return super.write(new TMessage(rawMessage));
+    return super.write(new TMessage(rawMessage).toBuffer());
   }
   *parser() {
     let buf = (this.fg.readBytes(8) || (yield 8));
