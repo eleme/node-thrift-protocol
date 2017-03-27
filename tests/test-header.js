@@ -1,5 +1,5 @@
 let assert = require('assert');
-let Thrift = require('../thrift');
+let Thrift = require('../');
 
 it('thrift header must be supported', done => {
 

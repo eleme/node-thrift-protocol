@@ -1,4 +1,4 @@
-let Thrift = require('../thrift');
+let Thrift = require('../');
 let SequenceTester = require('sequence-tester');
 
 it('event must be triggered in correct timing', () => {

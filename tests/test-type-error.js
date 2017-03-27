@@ -1,5 +1,5 @@
 let assert = require('assert');
-let Thrift = require('../thrift');
+let Thrift = require('../');
 
 it('type error must be caught', () => {
 
